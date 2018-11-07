@@ -12,7 +12,7 @@ import os
 from os import walk, getcwd
 from PIL import Image
 
-classes = ["fire"]
+classes = ["001"]
 
 def convert(size, box):
     dw = 1./size[0]
@@ -31,10 +31,10 @@ def convert(size, box):
 """-------------------------------------------------------------------""" 
 
 """ Configure Paths"""   
-mypath = "Labels/fire/"
-outpath = "Labels/"
+mypath = "Labels/001/"
+outpath = "Images/001/"
 
-cls = "fire"
+cls = "001"
 if cls not in classes:
     exit(0)
 cls_id = classes.index(cls)
@@ -81,7 +81,7 @@ for txt_name in txt_name_list:
             ymin = elems[1]
             ymax = elems[3]
             #
-            img_path = str('%s/Images/%s/%s.JPEG'%(wd, cls, os.path.splitext(txt_name)[0]))
+            img_path = str('%s/Images/%s/%s.jpg'%(wd, cls, os.path.splitext(txt_name)[0]))
             #t = magic.from_file(img_path)
             #wh= re.search('(\d+) x (\d+)', t).groups()
             im=Image.open(img_path)
@@ -98,6 +98,6 @@ for txt_name in txt_name_list:
 
     """ Save those images with bb into list"""
     if(ct != 0):
-        list_file.write('%s/Images/%s/%s.JPEG\n'%(wd, cls, os.path.splitext(txt_name)[0]))
+        list_file.write('%s/Images/%s/%s.jpg\n'%(wd, cls, os.path.splitext(txt_name)[0]))
                 
 list_file.close()       

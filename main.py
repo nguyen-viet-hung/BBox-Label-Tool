@@ -126,15 +126,15 @@ class LabelTool():
             self.category = int(s)
         else:
 ##            s = r'D:\workspace\python\labelGUI'
-            s = r'/home/devel/fire-data'
+            s = getcwd()
 ##        if not os.path.isdir(s):
 ##            tkMessageBox.showerror("Error!", message = "The specified dir doesn't exist!")
 ##            return
         # get image list
         self.imageDir = os.path.join(r'./Images', '%03d' %(self.category))
-        self.imageList = glob.glob(os.path.join(self.imageDir, '*.JPEG'))
+        self.imageList = glob.glob(os.path.join(self.imageDir, '*.jpg'))
         if len(self.imageList) == 0:
-            print ('No .JPEG images found in the specified dir!')
+            print ('No .jpg images found in the specified dir!')
             return
 
         # default to the 1st image in the collection
