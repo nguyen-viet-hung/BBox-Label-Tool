@@ -8,7 +8,7 @@ print('Debug - %s'%(current_dir))
 path_data = 'data/obj/'
 
 # Percentage of images to be used for the test set
-percentage_test = 10;
+percentage_test = 20;
 
 # Create and/or truncate train.txt and test.txt
 file_train = open('train.txt', 'w')  
@@ -20,6 +20,7 @@ index_test = round(100 / percentage_test)
 for pathAndFilename in glob.iglob(os.path.join(current_dir, "*.jpg")):
     print('Debug - %s'%(pathAndFileName))  
     title, ext = os.path.splitext(os.path.basename(pathAndFilename))
+    print('%s - %s'%(title, ext))
 
     if counter == index_test:
         counter = 1

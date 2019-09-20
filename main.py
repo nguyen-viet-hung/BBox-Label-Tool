@@ -171,9 +171,21 @@ class LabelTool():
         # load image
         imagepath = self.imageList[self.cur - 1]
         self.img = Image.open(imagepath)
-        self.tkimg = ImageTk.PhotoImage(self.img)
-        self.mainPanel.config(width = max(self.tkimg.width(), 400), height = max(self.tkimg.height(), 400))
+        iwidth, iheight = self.img.size
+##        self.tkimg = ImageTk.PhotoImage(self.img)
+        cwidth = 800
+        cheight = int(cwidth * iheight / iwidth)
+        if cheight > 700:
+            cheight = 700
+            cwidth = int(cheight * iwidth / iheight)
+##        print ('Configure Canvas to %dx%d' %(cwidth, cheight))
+        size = (cwidth, cheight)
+        resized = self.img.resize(size,Image.ANTIALIAS)
+        self.tkimg = ImageTk.PhotoImage(resized)
+##        self.mainPanel.config(width = max(self.tkimg.width(), 400), height = max(self.tkimg.height(), 400))
+        self.mainPanel.config(width = cwidth, height = cheight)
         self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
+        self.mainPanel.update()
         self.progLabel.config(text = "%04d/%04d" %(self.cur, self.total))
 
         # load labels
@@ -185,24 +197,42 @@ class LabelTool():
         if os.path.exists(self.labelfilename):
             with open(self.labelfilename) as f:
                 for (i, line) in enumerate(f):
-                    if i == 0:
-                        bbox_cnt = int(line.strip())
-                        continue
-                    tmp = [int(t.strip()) for t in line.split()]
-##                    print tmp
+##                    if i == 0:
+##                        bbox_cnt = int(line.strip())
+##                        continue
+##                    tmp = [float(t.strip()) for t in line.split()]
+                    tmp = []
+                    for t in line.split():
+                        if t.strip() == '0':
+                            tmp.append(0)
+                        else:
+                            tmp.append(float(t.strip()))
+##                    print(tmp)
                     self.bboxList.append(tuple(tmp))
-                    tmpId = self.mainPanel.create_rectangle(tmp[0], tmp[1], \
-                                                            tmp[2], tmp[3], \
+##                    tmpId = self.mainPanel.create_rectangle(tmp[0], tmp[1], \
+##                                                            tmp[2], tmp[3], \
+##                                                            width = 2, \
+##                                                            outline = COLORS[(len(self.bboxList)-1) % len(COLORS)])
+                    x1 = int(tmp[1] * self.mainPanel.winfo_width())
+                    y1 = int(tmp[2] * self.mainPanel.winfo_height())
+                    x2 = int(tmp[3] * self.mainPanel.winfo_width())
+                    y2 = int(tmp[4] * self.mainPanel.winfo_height())
+                    tmpId = self.mainPanel.create_rectangle(x1, y1, \
+                                                            x2, y2, \
                                                             width = 2, \
                                                             outline = COLORS[(len(self.bboxList)-1) % len(COLORS)])
+
                     self.bboxIdList.append(tmpId)
-                    self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(tmp[0], tmp[1], tmp[2], tmp[3]))
+##                    self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(tmp[0], tmp[1], tmp[2], tmp[3]))
+                    self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(x1, y1, x2, y2))
                     self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
 
     def saveImage(self):
         with open(self.labelfilename, 'w') as f:
-            f.write('%d\n' %len(self.bboxList))
+##            f.write('%d\n' %len(self.bboxList))
             for bbox in self.bboxList:
+##                print(bbox)
+##                f.write('0 ')
                 f.write(' '.join(map(str, bbox)) + '\n')
         print ('Image No. %d saved' %(self.cur))
 
@@ -213,7 +243,19 @@ class LabelTool():
         else:
             x1, x2 = min(self.STATE['x'], event.x), max(self.STATE['x'], event.x)
             y1, y2 = min(self.STATE['y'], event.y), max(self.STATE['y'], event.y)
-            self.bboxList.append((x1, y1, x2, y2))
+            rx1 = x1 / self.mainPanel.winfo_width()
+            rx2 = x2 / self.mainPanel.winfo_width()
+            ry1 = y1 / self.mainPanel.winfo_height()
+            ry2 = y2 / self.mainPanel.winfo_height()
+            if rx1 < 0.0:
+                rx1 = 0.0
+            if ry1 < 0.0:
+                ry1 = 0.0
+            if rx2 > 1.0:
+                rx2 = 1.0
+            if ry2 > 1.0:
+                ry2 = 1.0
+            self.bboxList.append((0, rx1, ry1, rx2, ry2))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
             self.listbox.insert(END, '(%d, %d) -> (%d, %d)' %(x1, y1, x2, y2))
