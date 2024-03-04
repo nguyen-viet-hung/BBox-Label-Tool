@@ -9,7 +9,7 @@
 from __future__ import division
 from tkinter import *
 # import tkMessageBox
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ExifTags
 from tkinter import ttk
 import os
 import glob
@@ -24,6 +24,7 @@ SIZE = 256, 256
 class LabelTool:
     def __init__(self, master):
         # set up the main frame
+        self.tmp = []
         self.parent = master
         self.parent.title("LabelTool")
         self.frame = Frame(self.parent)
@@ -136,6 +137,11 @@ class LabelTool:
         self.frame.columnconfigure(1, weight=1)
         self.frame.rowconfigure(4, weight=1)
 
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+        self.orientation = orientation
+
         # for debugging
 
     ##        self.setImage()
@@ -148,11 +154,8 @@ class LabelTool:
             self.category = int(s)
         else:
             s = r'D:\workspace\python\labelGUI'
-        ##        if not os.path.isdir(s):
-        ##            tkMessageBox.showerror("Error!", message = "The specified dir doesn't exist!")
-        ##            return
         # get image list
-        self.imageDir = os.path.join(r'./Images', '%03d' % (self.category))
+        self.imageDir = os.path.join(r'./Images', '%03d' % self.category)
         # print self.imageDir
         # print self.category
         self.imageList = glob.glob(os.path.join(self.imageDir, '*.JPG'))
@@ -166,7 +169,7 @@ class LabelTool:
         self.total = len(self.imageList)
 
         # set up output dir
-        self.outDir = os.path.join(r'./Labels', '%03d' % (self.category))
+        self.outDir = os.path.join(r'./Labels', '%03d' % self.category)
         if not os.path.exists(self.outDir):
             os.mkdir(self.outDir)
 
@@ -177,7 +180,6 @@ class LabelTool:
         if not os.path.exists(self.egDir):
             return
         filelist = glob.glob(os.path.join(self.egDir, '*.JPG'))
-        self.tmp = []
         self.egList = []
         random.shuffle(filelist)
         for (i, f) in enumerate(filelist):
@@ -197,19 +199,33 @@ class LabelTool:
         # load image
         imagepath = self.imageList[self.cur - 1]
         self.img = Image.open(imagepath)
+        # check if orientation
+        exif = self.img._getexif()
+        if not isinstance(exif, type(None)):
+            if exif[self.orientation] == 3:
+                self.img = self.img.rotate(180, expand=True)
+                self.img.save(imagepath)
+            elif exif[self.orientation] == 6:
+                self.img = self.img.rotate(270, expand=True)
+                self.img.save(imagepath)
+            elif exif[self.orientation] == 8:
+                self.img = self.img.rotate(90, expand=True)
+                self.img.save(imagepath)
         iwidth, iheight = self.img.size
+        print(iwidth, iheight)
         cwidth = 800
         cheight = int(cwidth * iheight / iwidth)
         if cheight > 700:
             cheight = 700
             cwidth = int(cheight * iwidth / iheight)
-        ##        print ('Configure Canvas to %dx%d' %(cwidth, cheight))
         size = (cwidth, cheight)
         resized = self.img.resize(size, Image.LANCZOS)
         self.tkimg = ImageTk.PhotoImage(resized)
         self.mainPanel.config(width=cwidth, height=cheight)
         self.mainPanel.create_image(0, 0, image=self.tkimg, anchor=NW)
+        self.mainPanel.update()
         self.progLabel.config(text="%04d/%04d" % (self.cur, self.total))
+        print(f'image size: {cwidth}x{cheight} vs panel size: {self.mainPanel.winfo_width()}x{self.mainPanel.winfo_height()}')
 
         # load labels
         self.clearBBox()
@@ -220,10 +236,6 @@ class LabelTool:
         if os.path.exists(self.labelfilename):
             with open(self.labelfilename) as f:
                 for (i, line) in enumerate(f):
-                    # if i == 0:
-                    #     bbox_cnt = int(line.strip())
-                    #     continue
-                    # tmp = [int(t.strip()) for t in line.split()]
                     t = line.split()
                     tmp = []
                     for (j, elm) in enumerate(t):
@@ -241,7 +253,7 @@ class LabelTool:
                                                             outline=COLORS[(len(self.bboxList) - 1) % len(COLORS)])
                     # print tmpId
                     self.bboxIdList.append(tmpId)
-                    self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.cla_can_temp[tmp[0]], x1, y1, x2, y2))
+                    self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.classcandidate.get(), x1, y1, x2, y2))
                     self.listbox.itemconfig(len(self.bboxIdList) - 1,
                                             fg=COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
 
@@ -273,7 +285,7 @@ class LabelTool:
             self.bboxList.append((self.classcandidate.current(), rx1, ry1, rx2, ry2))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
-            self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.cla_can_temp[self.classcandidate.current()], x1, y1, x2, y2))
+            self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.classcandidate.get(), x1, y1, x2, y2))
             self.listbox.itemconfig(len(self.bboxIdList) - 1, fg=COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
         self.STATE['click'] = 1 - self.STATE['click']
 
@@ -341,13 +353,6 @@ class LabelTool:
         self.currentLabelclass = self.classcandidate.get()
         print('set label class to :', self.currentLabelclass)
 
-
-##    def setImage(self, imagepath = r'test2.png'):
-##        self.img = Image.open(imagepath)
-##        self.tkimg = ImageTk.PhotoImage(self.img)
-##        self.mainPanel.config(width = self.tkimg.width())
-##        self.mainPanel.config(height = self.tkimg.height())
-##        self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
 
 if __name__ == '__main__':
     root = Tk()
