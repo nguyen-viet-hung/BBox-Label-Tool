@@ -243,17 +243,36 @@ class LabelTool:
                             tmp.append(int(elm.strip()))
                         else:
                             tmp.append(float(elm.strip()))
-                    self.bboxList.append(tuple(tmp))
-                    x1 = int(tmp[1] * self.mainPanel.winfo_width())
-                    y1 = int(tmp[2] * self.mainPanel.winfo_height())
-                    x2 = int(tmp[3] * self.mainPanel.winfo_width())
-                    y2 = int(tmp[4] * self.mainPanel.winfo_height())
+                    # here is for close mosaic from yolov5 or above
+                    if len(tmp) == 5: # bbox for old version
+                        new_tmp = []
+                        new_tmp.append(tmp[0])
+                        new_tmp.append(tmp[1])
+                        new_tmp.append(tmp[2])
+                        new_tmp.append(tmp[3])
+                        new_tmp.append(tmp[2])
+                        new_tmp.append(tmp[3])
+                        new_tmp.append(tmp[4])
+                        new_tmp.append(tmp[1])
+                        new_tmp.append(tmp[4])
+                        x1 = int(tmp[1] * self.mainPanel.winfo_width())
+                        y1 = int(tmp[2] * self.mainPanel.winfo_height())
+                        x2 = int(tmp[3] * self.mainPanel.winfo_width())
+                        y2 = int(tmp[4] * self.mainPanel.winfo_height())
+                        self.bboxList.append(tuple(new_tmp))
+                    else:
+                        self.bboxList.append(tuple(tmp))
+                        x1 = int(tmp[1] * self.mainPanel.winfo_width())
+                        y1 = int(tmp[2] * self.mainPanel.winfo_height())
+                        x2 = int(tmp[5] * self.mainPanel.winfo_width())
+                        y2 = int(tmp[6] * self.mainPanel.winfo_height())
+
                     tmpId = self.mainPanel.create_rectangle(x1, y1, x2, y2,
                                                             width=2,
                                                             outline=COLORS[(len(self.bboxList) - 1) % len(COLORS)])
                     # print tmpId
                     self.bboxIdList.append(tmpId)
-                    self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.classcandidate.get(), x1, y1, x2, y2))
+                    self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.cla_can_temp[tmp[0]], x1, y1, x2, y2))
                     self.listbox.itemconfig(len(self.bboxIdList) - 1,
                                             fg=COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
 
@@ -282,7 +301,7 @@ class LabelTool:
                 rx2 = 1.0
             if ry2 > 1.0:
                 ry2 = 1.0
-            self.bboxList.append((self.classcandidate.current(), rx1, ry1, rx2, ry2))
+            self.bboxList.append((self.classcandidate.current(), rx1, ry1, rx2, ry1, rx2, ry2, rx1, ry2))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
             self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.classcandidate.get(), x1, y1, x2, y2))
