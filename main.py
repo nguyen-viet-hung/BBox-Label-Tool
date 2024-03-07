@@ -211,8 +211,8 @@ class LabelTool:
             elif exif[self.orientation] == 8:
                 self.img = self.img.rotate(90, expand=True)
                 self.img.save(imagepath)
+
         iwidth, iheight = self.img.size
-        print(iwidth, iheight)
         cwidth = 800
         cheight = int(cwidth * iheight / iwidth)
         if cheight > 700:
@@ -225,7 +225,6 @@ class LabelTool:
         self.mainPanel.create_image(0, 0, image=self.tkimg, anchor=NW)
         self.mainPanel.update()
         self.progLabel.config(text="%04d/%04d" % (self.cur, self.total))
-        print(f'image size: {cwidth}x{cheight} vs panel size: {self.mainPanel.winfo_width()}x{self.mainPanel.winfo_height()}')
 
         # load labels
         self.clearBBox()
@@ -245,27 +244,38 @@ class LabelTool:
                             tmp.append(float(elm.strip()))
                     # here is for close mosaic from yolov5 or above
                     if len(tmp) == 5: # bbox for old version
-                        new_tmp = []
-                        new_tmp.append(tmp[0])
-                        new_tmp.append(tmp[1])
-                        new_tmp.append(tmp[2])
-                        new_tmp.append(tmp[3])
-                        new_tmp.append(tmp[2])
-                        new_tmp.append(tmp[3])
-                        new_tmp.append(tmp[4])
-                        new_tmp.append(tmp[1])
-                        new_tmp.append(tmp[4])
-                        x1 = int(tmp[1] * self.mainPanel.winfo_width())
-                        y1 = int(tmp[2] * self.mainPanel.winfo_height())
-                        x2 = int(tmp[3] * self.mainPanel.winfo_width())
-                        y2 = int(tmp[4] * self.mainPanel.winfo_height())
-                        self.bboxList.append(tuple(new_tmp))
-                    else:
+                        print(tmp)
+                        cx = int(tmp[1] * self.mainPanel.winfo_width())
+                        cy = int(tmp[2] * self.mainPanel.winfo_height())
+                        bw = int(tmp[3] * self.mainPanel.winfo_width())
+                        bh = int(tmp[4] * self.mainPanel.winfo_height())
                         self.bboxList.append(tuple(tmp))
-                        x1 = int(tmp[1] * self.mainPanel.winfo_width())
-                        y1 = int(tmp[2] * self.mainPanel.winfo_height())
-                        x2 = int(tmp[5] * self.mainPanel.winfo_width())
-                        y2 = int(tmp[6] * self.mainPanel.winfo_height())
+                        fx1 = cx - bw/2.0
+                        fy1 = cy - bh/2.0
+                        fx2 = cx + bw/2.0
+                        fy2 = cy + bh/2.0
+                        x1 = int(fx1)
+                        y1 = int(fy1)
+                        x2 = int(fx2)
+                        y2 = int(fy2)
+                        print(fx1, fy1, fx2, fy2, cx, cy, bw, bh)
+                    else:
+                        print(tmp)
+                        fx1 = tmp[1] * self.mainPanel.winfo_width()
+                        fy1 = tmp[2] * self.mainPanel.winfo_height()
+                        fx2 = tmp[5] * self.mainPanel.winfo_width()
+                        fy2 = tmp[6] * self.mainPanel.winfo_height()
+                        cx = (tmp[1] + tmp[5])/2.0
+                        cy = (tmp[2] + tmp[6])/2.0
+                        bw = tmp[5] - tmp[1]
+                        bh = tmp[6] - tmp[2]
+                        new_tmp = [tmp[0], cx, cy, bw, bh]
+                        self.bboxList.append(tuple(new_tmp))
+                        x1 = int(fx1)
+                        y1 = int(fy1)
+                        x2 = int(fx2)
+                        y2 = int(fy2)
+                        print(fx1, fy1, fx2, fy2, cx, cy, bw, bh)
 
                     tmpId = self.mainPanel.create_rectangle(x1, y1, x2, y2,
                                                             width=2,
@@ -301,7 +311,11 @@ class LabelTool:
                 rx2 = 1.0
             if ry2 > 1.0:
                 ry2 = 1.0
-            self.bboxList.append((self.classcandidate.current(), rx1, ry1, rx2, ry1, rx2, ry2, rx1, ry2))
+            cx = (rx1 + rx2) / 2.0
+            cy = (ry1 + ry2) / 2.0
+            bw = rx2 - rx1
+            bh = ry2 - ry1
+            self.bboxList.append((self.classcandidate.current(), cx, cy, bw, bh))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
             self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' % (self.classcandidate.get(), x1, y1, x2, y2))
