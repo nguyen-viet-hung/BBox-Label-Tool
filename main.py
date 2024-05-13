@@ -228,7 +228,8 @@ class LabelTool:
 
         # load labels
         self.clearBBox()
-        self.imagename = os.path.split(imagepath)[-1].split('.')[0]
+        self.imagename = os.path.splitext(os.path.basename(imagepath))[0]
+        print(self.imagename)
         labelname = self.imagename + '.txt'
         self.labelfilename = os.path.join(self.outDir, labelname)
         bbox_cnt = 0
@@ -287,6 +288,7 @@ class LabelTool:
                                             fg=COLORS[(len(self.bboxIdList) - 1) % len(COLORS)])
 
     def saveImage(self):
+        print(f"Writing filename: {self.labelfilename}")
         with open(self.labelfilename, 'w') as f:
             # f.write('%d\n' % len(self.bboxList))
             for bbox in self.bboxList:
