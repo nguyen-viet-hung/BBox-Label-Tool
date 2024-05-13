@@ -151,11 +151,11 @@ class LabelTool:
         if not dbg:
             s = self.entry.get()
             self.parent.focus()
-            self.category = int(s)
+            self.category = s
         else:
             s = r'D:\workspace\python\labelGUI'
         # get image list
-        self.imageDir = os.path.join(r'./Images', '%03d' % self.category)
+        self.imageDir = os.path.join(r'./Images', '%s' % self.category)
         # print self.imageDir
         # print self.category
         self.imageList = glob.glob(os.path.join(self.imageDir, '*.JPG'))
@@ -169,7 +169,7 @@ class LabelTool:
         self.total = len(self.imageList)
 
         # set up output dir
-        self.outDir = os.path.join(r'./Labels', '%03d' % self.category)
+        self.outDir = os.path.join(r'./Labels', '%s' % self.category)
         if not os.path.exists(self.outDir):
             os.mkdir(self.outDir)
 
